@@ -118,19 +118,29 @@ const Stack = React.createClass({
     placedBlock.left = $block.position().left;
 
     let player = placedBlock.player === 1 ? 2 : 1;
-    let diff = Math.abs(placedBlock.left - prevBlock.left);
+    let diff = placedBlock.left - prevBlock.left;
     let absDiff = Math.abs(diff);
-    console.log(absDiff);
+    const leftBound = prevBlock.left;
+    const rightBound = prevBlock.left + prevBlock.width;
 
     let left, width;
-    if (absDiff >= placedBlock.width) {
-      console.log('Game over');
-    } else if (absDiff > 0) {
-      width = placedBlock.width - diff;
-      left = prevBlock.left; 
+    if (placedBlock.left < leftBound) {
+      if (absDiff >= placedBlock.width) {
+        console.log('Game over');
+      } else {
+        left = leftBound;
+        width = placedBlock.width - absDiff;
+      }
+    } else if (placedBlock.left > leftBound) {
+      if (absDiff >= prevBlock.width) {
+        console.log('Game over');
+      } else {
+        left = placedBlock.left;
+        width = rightBound - placedBlock.left; 
+      }
     } else {
-      width = placedBlock.width;
       left = placedBlock.left;
+      width = placedBlock.width;
     }
 
     stack.push({ player, width, left, moving: true });

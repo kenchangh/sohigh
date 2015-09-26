@@ -120,20 +120,30 @@ var Stack = React.createClass({
     placedBlock.left = $block.position().left;
 
     var player = placedBlock.player === 1 ? 2 : 1;
-    var diff = Math.abs(placedBlock.left - prevBlock.left);
+    var diff = placedBlock.left - prevBlock.left;
     var absDiff = Math.abs(diff);
-    console.log(absDiff);
+    var leftBound = prevBlock.left;
+    var rightBound = prevBlock.left + prevBlock.width;
 
     var left = undefined,
         width = undefined;
-    if (absDiff >= placedBlock.width) {
-      console.log('Game over');
-    } else if (absDiff > 0) {
-      width = placedBlock.width - diff;
-      left = prevBlock.left;
+    if (placedBlock.left < leftBound) {
+      if (absDiff >= placedBlock.width) {
+        console.log('Game over');
+      } else {
+        left = leftBound;
+        width = placedBlock.width - absDiff;
+      }
+    } else if (placedBlock.left > leftBound) {
+      if (absDiff >= prevBlock.width) {
+        console.log('Game over');
+      } else {
+        left = placedBlock.left;
+        width = rightBound - placedBlock.left;
+      }
     } else {
-      width = placedBlock.width;
       left = placedBlock.left;
+      width = placedBlock.width;
     }
 
     stack.push({ player: player, width: width, left: left, moving: true });
