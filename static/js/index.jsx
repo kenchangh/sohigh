@@ -173,14 +173,225 @@ const Stack = React.createClass({
 });
 
 
+const RoomList = React.createClass({
+  getInitialState() {
+    return {
+      rooms: [],
+      creating: false,
+      somethingEntered: false,
+      created: false,
+    };
+  },
+
+  componentDidMount() {
+    $("#modal-open").animatedModal({
+      modalTarget: 'animatedModal',
+      animatedIn: 'bounceInUp',
+      animatedOut: 'bounceOutDown',
+      color: '#26A69A',
+      animationDuration: '.5s',
+    });
+
+    $.getJSON('/room', (response) => {
+      this.setState({ rooms: response.data });
+    });
+  },
+
+  styles: {
+    enter: {
+      borderRadius: '50%',
+      backgroundColor: '#E74B3D',
+      width: 100,
+      height: 100,
+      textAlign: 'center',
+      fontSize: 25,
+      marginTop: 20,
+      marginBottom: 20,
+      position: 'relative',
+      lineHeight: '100px',
+      padding: 0,
+    },
+    enterBox: {
+      marginTop: 100,
+      textAlign: 'center',
+    },
+    closeModal: {
+      paddingTop: 20,
+      paddingBottom: 20,
+      fontSize: 20,
+      cursor: 'pointer',
+    },
+    modal: {
+      color: 'white',
+    },
+    modalContent: {
+      paddingTop: 30,
+      paddingBottom: 30,
+    },
+    room: {
+      fontSize: 20,
+      listStyleType: 'none',
+      paddingLeft: 0,
+    },
+    createRoom: {
+      width: '100%',
+      backgroundColor: '#EF5350',
+      position: 'fixed',
+      left: 0,
+      bottom: 0,
+      height: 80,
+      paddingTop: 20,
+      fontSize: 30,
+      cursor: 'pointer',
+    },
+    createRoomInput: {
+      left: 0,
+      bottom: 0,
+      height: 80,
+      fontSize: 30,
+      textAlign: 'center',
+      paddingTop: 20,
+      width: '100%',
+      position: 'fixed',
+      backgroundColor: 'white',
+      color: 'grey',
+    }
+  },
+
+  renderRooms() {
+    if (this.state.rooms.length) {
+      const roomNodes = this.state.rooms.map((room) => {
+        return <li>{room}</li>;
+      });
+
+      return (
+        <ul style={this.styles.room}>
+          {roomNodes}
+        </ul>
+      );
+    } else {
+      return <p style={this.styles.room}>No rooms created so far... :(</p>;
+    }
+  },
+
+  renderCreateRoom() {
+    const roomList = this;
+
+    function onSomethingEntered(e) {
+      if (!roomList.state.somethingEntered) {
+        roomList.setState({
+          somethingEntered: true,
+        });
+      } else {
+        if (e.which === 13) {
+          roomList.reqCreateRoom();
+        }
+      }
+    }
+
+    if (this.state.creating) {
+      return (
+        <div
+          ref="createRoomInput"
+          style={this.styles.createRoomInput}
+          contentEditable="true"
+          placeholder="Enter your room name"
+          onKeyPress={onSomethingEntered}>
+        </div>
+      );
+    }
+  },
+
+  checkJoinedTick() {
+
+  },
+
+  reqCreateRoom() {
+    const $createRoomInput = $(React.findDOMNode(this.refs.createRoomInput));
+    const roomName = $createRoomInput.text();
+    let rooms = this.state.rooms;
+
+    if (roomName !== '') {
+      const payload = {
+        roomName,
+        userId: 'creator',
+      };
+
+      rooms.push(roomName);
+      $.post('/room/create', payload, (response) => {
+        this.setState({ rooms, roomName, created: true });
+      });
+    }
+  },
+
+  createRoom() {
+    if (!this.state.creating) {
+      const $createRoomBtn = $(React.findDOMNode(this.refs.createRoom));
+      $createRoomBtn.velocity({
+        bottom: 80,
+      }, {
+        duration: 200,
+        easing: 'easeInBounce',
+        complete: () => { this.setState({ creating: true }) }
+      });
+    } else {
+      this.reqCreateRoom(); 
+    }
+  },
+
+  renderModalContent() {
+    if (this.state.created && this.state.roomName) {
+      return (
+        <div style={this.styles.modalContent} className="col-md-6 col-md-offset-3">
+          <h1 style={{marginBottom: 20}}>{this.state.roomName}</h1>
+          <p style={this.styles.room}>Waiting for another player to join...</p>
+        </div>
+      );
+    } else {
+      return (
+        <div style={this.styles.modalContent} className="col-md-6 col-md-offset-3">
+          <h1 style={{marginBottom: 20}}>Rooms</h1>
+          {this.renderRooms()}
+
+          <div ref="createRoom" onClick={this.createRoom} style={this.styles.createRoom}>
+            {this.state.somethingEntered ? 'SUBMIT' : 'CREATE ROOM'}
+          </div>
+
+          {this.renderCreateRoom()}
+        </div>
+      );
+    }
+  },
+
+  render() {
+    return (
+      <div style={this.styles.enterBox} className="col-md-6 col-md-offset-3">
+        <a style={this.styles.enter} className="btn btn-danger" id="modal-open" href="#animatedModal" role="button">
+          PLAY
+        </a>
+        <div style={this.styles.modal} id="animatedModal">
+          <div style={this.styles.closeModal} className="close-animatedModal"> 
+            BACK
+          </div>
+
+          <div style={{backgroundColor: '#26A69A'}} className="modal-content">
+            {this.renderModalContent()}
+          </div>
+        </div>
+      </div>
+    );
+  }
+});
+
+
 const SoHighApp = React.createClass({
   render() {
-    return <Stack />;
+    return <RoomList />;
   }
 });
 
 
 React.render(
-  <Stack />,
+  <SoHighApp />,
   document.getElementById('ui-content')
 );
